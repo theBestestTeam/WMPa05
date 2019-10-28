@@ -1,110 +1,90 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.ServiceModel;
 using System.Text;
-
-namespace Server
+using System.Threading.Tasks;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+// The following code is extracted from the MSDN site:
+// https://msdn.microsoft.com/en-us/library/system.net.sockets.tcplistener(v=vs.110).aspx
+//
+namespace TCPIPServer
 {
-    [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
-    public class Server : IServer
+    class Program
     {
-        #region Everything we need to receive messages
-
-        DisplayMessageDelegate _displayMessageDelegate = null;
-
-        /// <summary>
-        /// The default constructor is only here for testing purposes.
-        /// </summary>
-        private Server()
+        static void Main(string[] args)
         {
-        }
-
-        /// <summary>
-        /// ChatBackend constructor should be called with a delegate that is capable of displaying messages.
-        /// </summary>
-        /// <param name="dmd">DisplayMessageDelegate</param>
-        public Server(DisplayMessageDelegate dmd)
-        {
-            _displayMessageDelegate = dmd;
-            StartService();
-        }
-
-        /// <summary>
-        /// This method gets called by our friends when they want to display a message on our screen.
-        /// We're really only returning a string for demonstration purposes ... it might be cleaner
-        /// to return void and also make this a one-way communication channel.
-        /// </summary>
-        /// <param name="composite"></param>
-        public void DisplayMessage(CompositeType composite)
-        {
-            if (composite == null)
+            TcpListener server = null;
+            try
             {
-                throw new ArgumentNullException("composite");
-            }
-            if (_displayMessageDelegate != null)
-            {
-                _displayMessageDelegate(composite);
-            }
-        }
+                // Set the TcpListener on port 13000.
+                Int32 port = 13000;
+                IPAddress localAddr = IPAddress.Parse("127.0.0.1");
 
-        #endregion // Everything we need to receive messages
+                // TcpListener server = new TcpListener(port);
+                server = new TcpListener(localAddr, port);
 
-        #region Everything we need for bi-directional communication
+                // Start listening for client requests.
+                server.Start();
 
-        private string _myUserName = "Anonymous";
-        private ServiceHost host = null;
-        private ChannelFactory<IServer> channelFactory = null;
-        private IServer _channel;
+                // Buffer for reading data
+                Byte[] bytes = new Byte[256];
+                String data = null;
 
-        /// <summary>
-        /// The front-end calls the SendMessage method in order to broadcast a message to our friends
-        /// </summary>
-        /// <param name="text"></param>
-        public void SendMessage(string text)
-        {
-            if (text.StartsWith("setname:", StringComparison.OrdinalIgnoreCase))
-            {
-                _myUserName = text.Substring("setname:".Length).Trim();
-                _displayMessageDelegate(new CompositeType("Event", "Setting your name to " + _myUserName));
-            }
-            else
-            {
-                // In order to send a message, we call our friends' DisplayMessage method
-                _channel.DisplayMessage(new CompositeType(_myUserName, text));
-            }
-        }
-
-        private void StartService()
-        {
-            host = new ServiceHost(this);
-            host.Open();
-            channelFactory = new ChannelFactory<IServer>("ChatEndpoint");
-            _channel = channelFactory.CreateChannel();
-
-            // Information to send to the channel
-            _channel.DisplayMessage(new CompositeType("Event", _myUserName + " has entered the conversation."));
-
-            // Information to display locally
-            _displayMessageDelegate(new CompositeType("Info", "To change your name, type setname: NEW_NAME"));
-        }
-
-        private void StopService()
-        {
-            if (host != null)
-            {
-                _channel.DisplayMessage(new CompositeType("Event", _myUserName + " is leaving the conversation."));
-                if (host.State != CommunicationState.Closed)
+                // Enter the listening loop.
+                while (true)
                 {
-                    channelFactory.Close();
-                    host.Close();
+                    Console.Write("Waiting for a connection... ");
+
+                    // Perform a blocking call to accept requests.
+                    // You could also user server.AcceptSocket() here.
+                    TcpClient client = server.AcceptTcpClient();
+                    Console.WriteLine("Connected!");
+
+                    data = null;
+
+                    // Get a stream object for reading and writing
+                    NetworkStream stream = client.GetStream();
+
+                    int i;
+
+                    // Loop to receive all the data sent by the client.
+                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                    {
+                        // Translate data bytes to a ASCII string.
+                        data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
+                        Console.WriteLine("Received: {0}", data);
+
+                        // Process the data sent by the client.
+                        data = data.ToUpper();
+
+                        byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
+
+                        // Send back a response.
+                        stream.Write(msg, 0, msg.Length);
+                        Console.WriteLine("Sent: {0}", data);
+                    }
+
+                    // Shutdown and end connection
+                    client.Close();
                 }
             }
+            catch (SocketException e)
+            {
+                Console.WriteLine("SocketException: {0}", e);
+            }
+            finally
+            {
+                // Stop listening for new clients.
+                server.Stop();
+            }
+
+
+            Console.WriteLine("\nHit enter to continue...");
+            Console.Read();
         }
-
-
-        #endregion // Everything we need for bi-directional communication
 
     }
 }
+
