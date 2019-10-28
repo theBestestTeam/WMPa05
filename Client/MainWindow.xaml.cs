@@ -24,5 +24,15 @@ namespace Client
         {
             InitializeComponent();
         }
+
+        private void messageText_KeyDown(object sender, KeyEventArgs e)
+        {
+
+        }
+
+        private void displayMessage()
+        {
+
+        }
     }
 }
