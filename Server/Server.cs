@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 // The following code is extracted from the MSDN site:
 // https://msdn.microsoft.com/en-us/library/system.net.sockets.tcplistener(v=vs.110).aspx
 //
@@ -28,9 +29,6 @@ namespace TCPIPServer
                 // Start listening for client requests.
                 server.Start();
 
-                // Buffer for reading data
-                Byte[] bytes = new Byte[256];
-                String data = null;
 
                 // Enter the listening loop.
                 while (true)
@@ -41,33 +39,11 @@ namespace TCPIPServer
                     // You could also user server.AcceptSocket() here.
                     TcpClient client = server.AcceptTcpClient();
                     Console.WriteLine("Connected!");
+                    ParameterizedThreadStart ts = new ParameterizedThreadStart(Worker);
+                    Thread clientThread = new Thread(ts);
+                    clientThread.Start(client);
 
-                    data = null;
 
-                    // Get a stream object for reading and writing
-                    NetworkStream stream = client.GetStream();
-
-                    int i;
-
-                    // Loop to receive all the data sent by the client.
-                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
-                    {
-                        // Translate data bytes to a ASCII string.
-                        data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                        Console.WriteLine("Received: {0}", data);
-
-                        // Process the data sent by the client.
-                        data = data.ToUpper();
-
-                        byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
-
-                        // Send back a response.
-                        stream.Write(msg, 0, msg.Length);
-                        Console.WriteLine("Sent: {0}", data);
-                    }
-
-                    // Shutdown and end connection
-                    client.Close();
                 }
             }
             catch (SocketException e)
@@ -85,6 +61,40 @@ namespace TCPIPServer
             Console.Read();
         }
 
+        public static void Worker(Object o)
+        {
+            TcpClient client = (TcpClient)o;
+            // Buffer for reading data
+            Byte[] bytes = new Byte[256];
+            String data = null;
+
+            data = null;
+
+            // Get a stream object for reading and writing
+            NetworkStream stream = client.GetStream();
+
+            int i;
+
+            // Loop to receive all the data sent by the client.
+            while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+            {
+                // Translate data bytes to a ASCII string.
+                data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
+                Console.WriteLine("Received: {0}", data);
+
+                // Process the data sent by the client.
+                data = data.ToUpper();
+
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
+
+                // Send back a response.
+                stream.Write(msg, 0, msg.Length);
+                Console.WriteLine("Sent: {0}", data);
+            }
+
+            // Shutdown and end connection
+            client.Close();
+        }
     }
 }
 

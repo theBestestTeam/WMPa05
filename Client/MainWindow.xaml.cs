@@ -12,7 +12,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Net.Sockets;
-
+using Server.Domain;
+using System.ServiceModel;
 
 namespace Client
 {
@@ -26,7 +27,28 @@ namespace Client
         {
             InitializeComponent();
             ConnectClient("127.0.0.1", "Hello, SET World!");
+        }
 
+        private MainWindow _window;
+        public MainWindow MainView { get; set; }
+        private readonly SolidColorBrush[] userBackground = new SolidColorBrush[4];
+        private User _user;
+
+        public MainWindow(MainWindow window, User user)
+        {
+            InitializeComponent();
+            this._window = window;
+            _user = user;
+            _window.Width = 540;
+            _window.Height = 400;
+
+            _window.Background = new SolidColorBrush();
+
+            //Opening 4 new window instances? Need to make it random if the user wants to open up new chat boxes
+            userBackground[0] = new SolidColorBrush(Color.FromArgb(223, 108, 41, 239));
+            userBackground[1] = new SolidColorBrush(Color.FromArgb(223, 239, 41, 210));
+            userBackground[2] = new SolidColorBrush(Color.FromArgb(223, 73, 44, 130));
+            userBackground[3] = new SolidColorBrush(Color.FromArgb(223, 115, 36, 103));
 
         }
 
@@ -84,14 +106,39 @@ namespace Client
             Console.Read();
         }
 
+        private void connectButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(Username.Text))
+            {
+                User user = new User
+                {
+                    TimeCreated = DateTime.UtcNow,
+                    Name = Username.Text
+                };
+
+                _window.MainView = new MainWindow(_window, user);
+                var uri = "net.tcp://localhost:6565/MessageService";
+                //var callBack = new InstanceContext(new MessageServiceCallBack());
+                var binding = new NetTcpBinding(SecurityMode.None);
+                //var channel = new DuplexChannelFactory<IMessageService>(callBack, binding);
+                var endPoint = new EndpointAddress(uri);
+                //var proxy = channel.CreateChannel(endPoint);
+                //proxy?.Connect(user);
+                
+                _window.Main.Children.Clear();
+                _window.Main.Children.Add(_window.MainView);
+
+            }
+        }
+
         //public void DisplayMessage(Server.CompositeType composite)
         //{
-            
+
         //}
 
         //private void textBoxEntryField_KeyDown(object sender, KeyEventArgs e)
         //{
-           
+
         //}
     }
 }

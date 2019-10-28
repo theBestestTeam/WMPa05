@@ -6,17 +6,17 @@
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
         Title="Chat Window" Height="341" Width="512" Background="SlateGray" ResizeMode="CanMinimize">
-    <Grid>
+    <Grid Name="Main">
         <TextBox Height="23" HorizontalAlignment="Left" Margin="68,8,0,0" Name="serverIP" VerticalAlignment="Top" Width="97" />
         <Label Content="Server IP:" Height="28" HorizontalAlignment="Left" Margin="8,6,0,0" Name="label1" VerticalAlignment="Top" />
         <TextBox Height="23" HorizontalAlignment="Left" Margin="199,8,0,0" Name="serverPort" VerticalAlignment="Top" Width="47" />
         <Label Content="Port:" Height="28" HorizontalAlignment="Left" Margin="166,6,0,0" Name="label2" VerticalAlignment="Top" />
         <TextBox Height="231" HorizontalAlignment="Left" Margin="11,38,0,0" Name="chatBox" VerticalAlignment="Top" Width="479" IsReadOnly="True" VerticalScrollBarVisibility="Visible" />
         <Label Content="Local Name:" Height="28" HorizontalAlignment="Left" Margin="316,7,0,0" Name="label4" VerticalAlignment="Top" />
-        <TextBox Height="23" HorizontalAlignment="Left" Margin="390,8,0,0" Name="localName" VerticalAlignment="Top" Width="100" />
+        <TextBox Height="23" HorizontalAlignment="Left" Margin="390,8,0,0" x:Name="Username" VerticalAlignment="Top" Width="100" />
         <Label Content="Message:" Height="28" HorizontalAlignment="Left" Margin="5,272,0,0" Name="label5" VerticalAlignment="Top" />
         <TextBox Height="23" HorizontalAlignment="Left" Margin="62,274,0,0" Name="messageText" VerticalAlignment="Top" Width="305" />
         <Button Content="Send" Height="23" HorizontalAlignment="Left" Margin="373,274,0,0" Name="sendMessageButton" VerticalAlignment="Top" Width="117"/>
-        <Button Content="Connect" Height="23" HorizontalAlignment="Left" Margin="258,8,0,0" x:Name="connectButton" VerticalAlignment="Top" Width="53" />
+        <Button Content="Connect" Height="23" HorizontalAlignment="Left" Margin="258,8,0,0" x:Name="connectButton" VerticalAlignment="Top" Width="53" Click="connectButton_Click" />
     </Grid>
 </Window>
